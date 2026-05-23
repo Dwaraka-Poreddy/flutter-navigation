@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_navigation/routes/app_routes.dart';
-import 'package:flutter_navigation/screens/main_shell_screen.dart';
+import 'package:flutter_navigation/routes/router.dart';
 import 'package:flutter_navigation/services/auth_service.dart';
 import 'package:flutter_navigation/services/deep_link_service.dart';
 import 'package:flutter_navigation/services/navigation_service.dart';
@@ -46,59 +46,11 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      navigatorKey: _navigationService.navigatorKey,
+    return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       themeMode: ThemeMode.dark,
       darkTheme: ThemeData.dark(),
-      initialRoute: AppRoutes.splash,
-      onGenerateRoute: (settings) {
-        switch (settings.name) {
-          case AppRoutes.splash:
-            return MaterialPageRoute(
-              builder: (_) => SplashScreen(navService: _navigationService),
-            );
-          case AppRoutes.login:
-            return MaterialPageRoute(
-              builder:
-                  (_) => LoginScreen(
-                    navService: _navigationService,
-                    authService: _authService,
-                  ),
-            );
-
-          case AppRoutes.home:
-            return MaterialPageRoute(
-              builder: (_) => HomeScreen(navService: _navigationService),
-            );
-
-          case AppRoutes.mainShell:
-            return MaterialPageRoute(builder: (_) => MainShellScreen());
-
-          case AppRoutes.profile:
-            return MaterialPageRoute(
-              builder: (_) => ProfileScreen(navService: _navigationService),
-            );
-
-          case AppRoutes.product:
-            final productArguments = settings.arguments as ProductArguments;
-            return MaterialPageRoute(
-              builder:
-                  (_) => ProductScreen(
-                    navService: _navigationService,
-                    productArguments: productArguments,
-                  ),
-            );
-
-          default:
-            return MaterialPageRoute(
-              builder:
-                  (_) => const Scaffold(
-                    body: Center(child: Text("Route Not Found")),
-                  ),
-            );
-        }
-      },
+      routerConfig: router,
     );
   }
 }
