@@ -7,11 +7,9 @@ class AuthService {
 
   void login() {
     _isLoggedIn = true;
-    print("User Logged In");
   }
 
   void logout() {
     _isLoggedIn = false;
-    print("User Logged Out");
   }
 }

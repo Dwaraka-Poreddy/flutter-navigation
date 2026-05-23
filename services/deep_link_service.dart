@@ -1,9 +1,11 @@
 import 'dart:async';
 
 import 'package:app_links/app_links.dart';
+import 'package:flutter_navigation/models/navigation_request.dart';
 import 'package:flutter_navigation/routes/app_routes.dart';
 import 'package:flutter_navigation/services/auth_service.dart';
 import 'package:flutter_navigation/services/navigation_service.dart';
+import 'package:flutter_navigation/services/route_guard_service.dart';
 
 import '../models/product_arguments.dart';
 
@@ -13,21 +15,24 @@ class DeepLinkService {
   final AppLinks _appLinks = AppLinks();
   final NavigationService navigationService;
   final AuthService authService;
+  final RouteGuardService routeGuardService;
 
   StreamSubscription? _sub;
 
-  DeepLinkService({required this.navigationService, required this.authService});
+  DeepLinkService({
+    required this.navigationService,
+    required this.authService,
+    required this.routeGuardService,
+  });
 
   void init() async {
     try {
       final Uri? initialUri = await _appLinks.getInitialLink();
       if (initialUri != null) {
-        print("Cold Start URI: $initialUri");
         _handleUri(initialUri);
       }
 
       _sub = _appLinks.uriLinkStream.listen((Uri uri) {
-        print("Warm Start URI: $uri");
         _handleUri(uri);
       });
     } catch (e) {
@@ -39,10 +44,7 @@ class DeepLinkService {
     _sub?.cancel();
   }
 
-  void _handleUri(Uri uri) {
-    print("Host: ${uri.host}");
-    print("Path Segments: ${uri.pathSegments}");
-
+  void _handleUri(Uri uri) async {
     if (uri.host == 'product') {
       final productArguments = ProductArguments(
         productId: uri.pathSegments.first,
@@ -51,24 +53,11 @@ class DeepLinkService {
         isFromNotification: uri.pathSegments[3].toLowerCase() == "true",
       );
 
-      if (navigationService.navigatorKey.currentState == null) {
-        print("Navigator is not ready yet");
-        return;
-      }
-
-      if (!authService.isLoggedIn) {
-        print("User not logged in");
-
-        authService.pendingRoute = AppRoutes.product;
-        authService.pendingArguments = productArguments;
-
-        navigationService.pushNamed(AppRoutes.login);
-        return;
-      }
-
-      navigationService.pushNamed(
-        AppRoutes.product,
-        arguments: productArguments,
+      await routeGuardService.handleNavigation(
+        NavigationRequest(
+          routeName: AppRoutes.product,
+          arguments: productArguments,
+        ),
       );
     }
   }

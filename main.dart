@@ -3,13 +3,11 @@ import 'package:flutter_navigation/routes/app_routes.dart';
 import 'package:flutter_navigation/services/auth_service.dart';
 import 'package:flutter_navigation/services/deep_link_service.dart';
 import 'package:flutter_navigation/services/navigation_service.dart';
+import 'package:flutter_navigation/services/route_guard_service.dart';
 import 'package:flutter_navigation/services/service_locator.dart';
 
 import 'models/product_arguments.dart';
 
-/// **Setup Dependency Injection before running the app**
-/// This is REQUIRED - setupServiceLocator() creates and registers
-/// all dependencies (NavigationService, etc.) so they're available everywhere.
 void main() {
   setupServiceLocator();
   runApp(const MyApp());
@@ -23,16 +21,14 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  /// **Get the NavigationService from DI container**
-  /// `getIt<NavigationService>()` retrieves the singleton instance
-  /// registered in setupServiceLocator()
   final NavigationService _navigationService = getIt<NavigationService>();
   final AuthService _authService = getIt<AuthService>();
+  final RouteGuardService _routeGuardService = getIt<RouteGuardService>();
 
-  /// Create DeepLinkService and inject NavigationService
   late final DeepLinkService _deepLinkService = DeepLinkService(
     navigationService: _navigationService,
     authService: _authService,
+    routeGuardService: _routeGuardService,
   );
 
   @override
@@ -50,21 +46,14 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      /// Use the navigatorKey from injected service
       navigatorKey: _navigationService.navigatorKey,
       debugShowCheckedModeBanner: false,
       themeMode: ThemeMode.dark,
       darkTheme: ThemeData.dark(),
       initialRoute: AppRoutes.splash,
       onGenerateRoute: (settings) {
-        print("Route Requested: ${settings.name}");
-
         switch (settings.name) {
           case AppRoutes.splash:
-
-            /// **Inject NavigationService into SplashScreen**
-            /// SplashScreen receives navService as a constructor parameter
-            /// So it doesn't need to know about getIt or static classes
             return MaterialPageRoute(
               builder: (_) => SplashScreen(navService: _navigationService),
             );
@@ -110,31 +99,19 @@ class _MyAppState extends State<MyApp> {
   }
 }
 
-/// **SplashScreen now receives NavigationService via constructor**
-/// This is explicit: anyone reading this code can see "this screen uses navigation"
-/// Before: NavigationService.pushNamed(...) - hides the dependency
-/// Now: navService.pushNamed(...) - clear dependency
 class SplashScreen extends StatelessWidget {
-  /// **Injected dependency** - passed in constructor
   final NavigationService navService;
 
   const SplashScreen({required this.navService, super.key});
 
   @override
   Widget build(BuildContext context) {
-    print("SplashScreen BUILD");
-
     return Scaffold(
       appBar: AppBar(title: const Text("SplashScreen")),
       body: Center(
         child: ElevatedButton(
           onPressed: () async {
-            print("Before Push");
-
-            /// Use injected navService instead of static class
-            final result = await navService.pushNamed(AppRoutes.login);
-
-            print("After Pop Returned result: $result");
+            await navService.pushNamed(AppRoutes.login);
           },
           child: const Text("Go To Login"),
         ),
@@ -155,23 +132,26 @@ class LoginScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print("LoginScreen BUILD");
-
     return Scaffold(
       appBar: AppBar(title: const Text("LoginScreen")),
       body: Center(
         child: ElevatedButton(
           onPressed: () async {
             authService.login();
+
             if (authService.pendingRoute != null) {
               final route = authService.pendingRoute!;
               final arguments = authService.pendingArguments;
               authService.pendingRoute = null;
               authService.pendingArguments = null;
 
-              navService.pushNamedAndRemoveUntil(route, arguments: arguments);
+              await navService.pushMultipleAndRemoveUntil(
+                [AppRoutes.home, route],
+                arguments: [null, arguments],
+              );
               return;
             }
+
             await navService.pushNamedAndRemoveUntil(AppRoutes.home);
           },
           child: const Text("Login"),
@@ -188,18 +168,12 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print("HomeScreen BUILD");
-
     return Scaffold(
       appBar: AppBar(title: const Text("Home")),
       body: Center(
         child: ElevatedButton(
           onPressed: () async {
-            print("Before Push");
-
-            final result = await navService.pushNamed(AppRoutes.profile);
-
-            print("After Pop Returned result: $result");
+            await navService.pushNamed(AppRoutes.profile);
           },
           child: const Text("Go To Profile"),
         ),
@@ -219,28 +193,13 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   @override
-  void initState() {
-    super.initState();
-    print("initState");
-  }
-
-  @override
-  void dispose() {
-    print("dispose");
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    print("ProfileScreen BUILD");
     return Scaffold(
       appBar: AppBar(title: const Text("Profile")),
       body: Center(
         child: ElevatedButton(
           onPressed: () async {
-            print("Before Push");
-
-            final result = await widget.navService.pushNamed(
+            await widget.navService.pushNamed(
               AppRoutes.product,
               arguments: ProductArguments(
                 productId: "P1001",
@@ -249,8 +208,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 isFromNotification: true,
               ),
             );
-
-            print("After Pop Returned result: $result");
           },
           child: const Text("Go To Product Screen for iPhone"),
         ),
@@ -271,10 +228,6 @@ class ProductScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print(
-      "Product Screen BUILD with productId: ${productArguments.productName}",
-    );
-
     return Scaffold(
       appBar: AppBar(
         title: Text("ProductScreen for ${productArguments.productName}"),

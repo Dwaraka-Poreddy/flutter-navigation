@@ -21,14 +21,35 @@ class NavigationService {
   Future<T?>? pushNamedAndRemoveUntil<T extends Object?>(
     String routeName, {
     Object? arguments,
-    String? baseRoute, // Route to keep (e.g., AppRoutes.home)
+    String? baseRoute,
   }) {
     return navigatorKey.currentState?.pushNamedAndRemoveUntil(
       routeName,
       baseRoute != null
           ? (route) => route.settings.name == baseRoute
-          : (route) => false, // Remove all if no baseRoute
+          : (route) => false,
       arguments: arguments,
     );
+  }
+
+  Future<void> pushMultipleAndRemoveUntil<T extends Object?>(
+    List<String> routeNames, {
+    List<Object?>? arguments,
+    String? baseRoute,
+  }) async {
+    pushNamedAndRemoveUntil(
+      routeNames.first,
+      arguments:
+          arguments != null && arguments.isNotEmpty ? arguments[0] : null,
+      baseRoute: baseRoute,
+    );
+
+    for (int i = 1; i < routeNames.length; i++) {
+      pushNamed(
+        routeNames[i],
+        arguments:
+            arguments != null && i < arguments.length ? arguments[i] : null,
+      );
+    }
   }
 }
