@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 
+/// Navigation Service - See NAVIGATION_SERVICE.md for usage patterns.
 class NavigationService {
-  static final GlobalKey<NavigatorState> navigatorKey =
+  final GlobalKey<NavigatorState> navigatorKey =
       GlobalKey<NavigatorState>();
 
-  static Future<T?>? pushNamed<T extends Object?>(
+  Future<T?>? pushNamed<T extends Object?>(
     String routeName, {
     Object? arguments,
   }) {
@@ -14,7 +15,8 @@ class NavigationService {
     );
   }
 
-  static void pop<T extends Object?>([T? result]) {
+  void pop<T extends Object?>([T? result]) {
     navigatorKey.currentState?.pop(result);
   }
 }
+

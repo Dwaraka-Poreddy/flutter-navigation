@@ -6,10 +6,15 @@ import 'package:flutter_navigation/services/navigation_service.dart';
 
 import '../models/product_arguments.dart';
 
+/// Deep Link Service - Handles app links and uses injected NavigationService.
+/// See NAVIGATION_SERVICE.md for integration details.
 class DeepLinkService {
   final AppLinks _appLinks = AppLinks();
+  final NavigationService navigationService;
 
   StreamSubscription? _sub;
+
+  DeepLinkService({required this.navigationService});
 
   void init() async {
     try {
@@ -42,12 +47,12 @@ class DeepLinkService {
       final price = uri.pathSegments[2];
       final isFromNotification = uri.pathSegments[3];
 
-      if (NavigationService.navigatorKey.currentState == null) {
+      if (navigationService.navigatorKey.currentState == null) {
         print("Navigator is not ready yet");
         return;
       }
 
-      NavigationService.pushNamed(
+      navigationService.pushNamed(
         AppRoutes.product,
         arguments: ProductArguments(
           productId: productId,
