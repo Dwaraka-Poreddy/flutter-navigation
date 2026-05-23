@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_navigation/routes/app_routes.dart';
+import 'package:flutter_navigation/screens/main_shell_screen.dart';
 import 'package:flutter_navigation/services/auth_service.dart';
 import 'package:flutter_navigation/services/deep_link_service.dart';
 import 'package:flutter_navigation/services/navigation_service.dart';
@@ -71,6 +72,9 @@ class _MyAppState extends State<MyApp> {
               builder: (_) => HomeScreen(navService: _navigationService),
             );
 
+          case AppRoutes.mainShell:
+            return MaterialPageRoute(builder: (_) => MainShellScreen());
+
           case AppRoutes.profile:
             return MaterialPageRoute(
               builder: (_) => ProfileScreen(navService: _navigationService),
@@ -108,13 +112,23 @@ class SplashScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("SplashScreen")),
-      body: Center(
-        child: ElevatedButton(
-          onPressed: () async {
-            await navService.pushNamed(AppRoutes.login);
-          },
-          child: const Text("Go To Login"),
-        ),
+      body: Column(
+        children: [
+          Center(
+            child: ElevatedButton(
+              onPressed: () async {
+                await navService.pushNamed(AppRoutes.login);
+              },
+              child: const Text("Go To Login"),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              await navService.pushNamed(AppRoutes.mainShell);
+            },
+            child: const Text("Go To Main Shell Screen"),
+          ),
+        ],
       ),
     );
   }
@@ -171,11 +185,21 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text("Home")),
       body: Center(
-        child: ElevatedButton(
-          onPressed: () async {
-            await navService.pushNamed(AppRoutes.profile);
-          },
-          child: const Text("Go To Profile"),
+        child: Column(
+          children: [
+            ElevatedButton(
+              onPressed: () async {
+                await navService.pushNamed(AppRoutes.profile);
+              },
+              child: const Text("Go To Profile"),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                await navService.pushNamed(AppRoutes.mainShell);
+              },
+              child: const Text("Go To Main Shell Screen"),
+            ),
+          ],
         ),
       ),
     );
