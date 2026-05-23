@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_navigation/routes/app_routes.dart';
+import 'package:flutter_navigation/services/auth_service.dart';
 import 'package:flutter_navigation/services/deep_link_service.dart';
 import 'package:flutter_navigation/services/navigation_service.dart';
 import 'package:flutter_navigation/services/service_locator.dart';
@@ -23,13 +24,15 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   /// **Get the NavigationService from DI container**
-  /// getIt<NavigationService>() retrieves the singleton instance
+  /// `getIt<NavigationService>()` retrieves the singleton instance
   /// registered in setupServiceLocator()
   final NavigationService _navigationService = getIt<NavigationService>();
+  final AuthService _authService = getIt<AuthService>();
 
   /// Create DeepLinkService and inject NavigationService
   late final DeepLinkService _deepLinkService = DeepLinkService(
     navigationService: _navigationService,
+    authService: _authService,
   );
 
   @override
@@ -67,7 +70,11 @@ class _MyAppState extends State<MyApp> {
             );
           case AppRoutes.login:
             return MaterialPageRoute(
-              builder: (_) => LoginScreen(navService: _navigationService),
+              builder:
+                  (_) => LoginScreen(
+                    navService: _navigationService,
+                    authService: _authService,
+                  ),
             );
 
           case AppRoutes.home:
@@ -138,8 +145,13 @@ class SplashScreen extends StatelessWidget {
 
 class LoginScreen extends StatelessWidget {
   final NavigationService navService;
+  final AuthService authService;
 
-  const LoginScreen({required this.navService, super.key});
+  const LoginScreen({
+    required this.navService,
+    required this.authService,
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -150,13 +162,19 @@ class LoginScreen extends StatelessWidget {
       body: Center(
         child: ElevatedButton(
           onPressed: () async {
-            print("Before Push");
+            authService.login();
+            if (authService.pendingRoute != null) {
+              final route = authService.pendingRoute!;
+              final arguments = authService.pendingArguments;
+              authService.pendingRoute = null;
+              authService.pendingArguments = null;
 
-            final result = await navService.pushNamed(AppRoutes.home);
-
-            print("After Pop Returned result: $result");
+              navService.pushNamedAndRemoveUntil(route, arguments: arguments);
+              return;
+            }
+            await navService.pushNamedAndRemoveUntil(AppRoutes.home);
           },
-          child: const Text("Go To Home"),
+          child: const Text("Login"),
         ),
       ),
     );

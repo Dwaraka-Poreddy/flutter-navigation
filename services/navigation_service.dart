@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 
 /// Navigation Service - See NAVIGATION_SERVICE.md for usage patterns.
 class NavigationService {
-  final GlobalKey<NavigatorState> navigatorKey =
-      GlobalKey<NavigatorState>();
+  final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
   Future<T?>? pushNamed<T extends Object?>(
     String routeName, {
@@ -18,5 +17,18 @@ class NavigationService {
   void pop<T extends Object?>([T? result]) {
     navigatorKey.currentState?.pop(result);
   }
-}
 
+  Future<T?>? pushNamedAndRemoveUntil<T extends Object?>(
+    String routeName, {
+    Object? arguments,
+    String? baseRoute, // Route to keep (e.g., AppRoutes.home)
+  }) {
+    return navigatorKey.currentState?.pushNamedAndRemoveUntil(
+      routeName,
+      baseRoute != null
+          ? (route) => route.settings.name == baseRoute
+          : (route) => false, // Remove all if no baseRoute
+      arguments: arguments,
+    );
+  }
+}
