@@ -10,6 +10,8 @@ import 'package:flutter_navigation/services/service_locator.dart';
 import 'models/product_arguments.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  authService.initializeApp();
   setupServiceLocator();
   runApp(const MyApp());
 }

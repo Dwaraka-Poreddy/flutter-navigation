@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_navigation/routes/app_route_observer.dart';
 import 'package:flutter_navigation/routes/router.dart';
 import 'package:go_router/go_router.dart';
 
